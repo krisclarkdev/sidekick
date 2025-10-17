@@ -206,7 +206,7 @@ def main():
 
     while True:
         try:
-            prompt_text = "sidekick > "
+            prompt_text = "sidekick prompt > "
             user_prompt = prompt_session.prompt([('class:prompt', prompt_text)])
 
             if user_prompt.lower() in ["/exit", "/quit"]:
