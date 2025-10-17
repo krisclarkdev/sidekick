@@ -220,18 +220,18 @@ Now, fulfill the user's request.
                 continue
 
             if user_prompt.lower() == "/system_prompt":
-                new_system_prompt = input_dialog(
-                    title="System Prompt Editor",
-                    text="Edit the system prompt for this session:",
-                    default=system_prompt,
-                    multiline=True
-                ).run()
-
+                color_print("\nEditing system prompt. Press Meta+Enter or Esc+Enter to finish.", 'system')
+                new_system_prompt = prompt_session.prompt(
+                    multiline=True,
+                    default=system_prompt
+                )
+                
                 if new_system_prompt:
                     system_prompt = new_system_prompt
-                    color_print("System prompt updated for this session.", 'success')
+                    color_print("\nSystem prompt updated for this session.", 'success')
                 else:
-                    color_print("System prompt update canceled.", 'system')
+                    color_print("\nSystem prompt update canceled.", 'system')
+                print()
                 continue
 
             if user_prompt.lower() == "/llm_server":

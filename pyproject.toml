@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sidekick-agent"
+name = "sidekick"
 version = "1.0.1" # Version bump for the fix
 authors = [
   { name="Kris Clark", email="kris.clark@snhu.edu" },
@@ -23,8 +23,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/krisclarkdev/sidekick-agent"
-"Bug Tracker" = "https://github.com/krisclarkdev/sidekick-agent/issues"
+"Homepage" = "https://github.com/krisclarkdev/sidekick"
+"Bug Tracker" = "https://github.com/krisclarkdev/sidekick/issues"
 
 [project.scripts]
 sidekick = "sidekick.main:main"
