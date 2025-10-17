@@ -3,10 +3,10 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sidekick"
-version = "1.0.0" # Version bump for new name
+name = "sidekick-agent"
+version = "1.0.1" # Version bump for the fix
 authors = [
-  { name="Kris Clark", email="no@no.com" },
+  { name="Kris Clark", email="kris.clark@snhu.edu" },
 ]
 description = "A friendly AI agent for your terminal that can create, edit, and test code."
 readme = "README.md"
@@ -27,6 +27,7 @@ dependencies = [
 "Bug Tracker" = "https://github.com/krisclarkdev/sidekick-agent/issues"
 
 [project.scripts]
-sidekick = "ai_agent.main:main"
+sidekick = "sidekick.main:main"
 
-
+[tool.setuptools.packages.find]
+where = ["src"]
