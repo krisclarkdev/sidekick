@@ -14,11 +14,7 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
-
-# --- Configuration ---
-API_BASE = os.getenv("AI_AGENT_API_BASE", "http://localhost:1234/v1")
-MODEL_NAME = os.getenv("AI_AGENT_MODEL", "default-model")
-API_KEY = os.getenv("AI_AGENT_API_KEY", "dummy-key")
+from prompt_toolkit.shortcuts import input_dialog
 
 # --- UI Styling ---
 style = Style.from_dict({
@@ -34,8 +30,6 @@ style = Style.from_dict({
 
 def color_print(text, style_class):
     """Prints text in a given style."""
-    # A simple color print. A more robust solution might use a library.
-    # This is a basic implementation for demonstration.
     colors = {
         'system': '\033[93m',  # Yellow
         'user': '\033[92m',  # Green
@@ -101,8 +95,61 @@ def execute_test(command: str):
         color_print(
             f"❌ An unexpected error occurred while running the test: {e}", 'error')
 
-# --- System Prompt ---
-SYSTEM_PROMPT = """
+# --- Spinner Class for Progress Indication ---
+class Spinner:
+    def __init__(self, message="Thinking..."):
+        self.message = message
+        self._thread = None
+        self.active = False
+
+    def spin(self):
+        spinner_chars = itertools.cycle(['⠇', '⠏', '⠋', '⠙', '⠹', '⠸', '⠼', '⠴'])
+        while self.active:
+            char = next(spinner_chars)
+            # Using ANSI escape codes for color
+            print(
+                f"\r\033[96m{char}\033[0m {self.message}", end="", flush=True)
+            time.sleep(0.1)
+        # Clear the spinner line
+        print("\r" + " " * (len(self.message) + 2) + "\r", end="", flush=True)
+
+    def start(self):
+        self.active = True
+        self._thread = threading.Thread(target=self.spin, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        if self.active:
+            self.active = False
+            if self._thread:
+                self._thread.join(timeout=0.2)
+# --- Main Application Logic ---
+def get_model_choices(api_base):
+    """Fetches the list of available models from the API."""
+    try:
+        response = requests.get(f"{api_base}/models")
+        response.raise_for_status()
+        models_data = response.json()
+        return [model['id'] for model in models_data.get('data', [])]
+    except requests.exceptions.RequestException as e:
+        color_print(f"Error fetching models: {e}", 'error')
+        return []
+
+def clear_screen():
+    """Clears the terminal screen."""
+    # For Windows
+    if os.name == 'nt':
+        _ = os.system('cls')
+    # For macOS and Linux
+    else:
+        _ = os.system('clear')
+
+def main():
+    # --- Configuration moved inside main for dynamic changes ---
+    api_base = os.getenv("AI_AGENT_API_BASE", "http://localhost:1234/v1")
+    current_model = os.getenv("AI_AGENT_MODEL", "default-model")
+    api_key = os.getenv("AI_AGENT_API_KEY", "dummy-key")
+    system_prompt = """
 You are an expert software developer agent. Your goal is to help the user with their coding tasks by generating, editing, and testing files.
 
 You must respond with a JSON object containing a list of actions to perform.
@@ -136,59 +183,10 @@ Your JSON response should be:
 
 Now, fulfill the user's request.
 """
-# --- Spinner Class for Progress Indication ---
-class Spinner:
-    def __init__(self, message="Thinking..."):
-        self.message = message
-        self._thread = None
-        self.active = False
 
-    def spin(self):
-        spinner_chars = itertools.cycle(['⠇', '⠏', '⠋', '⠙', '⠹', '⠸', '⠼', '⠴'])
-        while self.active:
-            char = next(spinner_chars)
-            # Using ANSI escape codes for color
-            print(
-                f"\r\033[96m{char}\033[0m {self.message}", end="", flush=True)
-            time.sleep(0.1)
-        # Clear the spinner line
-        print("\r" + " " * (len(self.message) + 2) + "\r", end="", flush=True)
-
-    def start(self):
-        self.active = True
-        self._thread = threading.Thread(target=self.spin, daemon=True)
-        self._thread.start()
-
-    def stop(self):
-        if self.active:
-            self.active = False
-            if self._thread:
-                self._thread.join(timeout=0.2)
-# --- Main Application Logic ---
-def get_model_choices():
-    """Fetches the list of available models from the API."""
-    try:
-        response = requests.get(f"{API_BASE}/models")
-        response.raise_for_status()
-        models_data = response.json()
-        return [model['id'] for model in models_data.get('data', [])]
-    except requests.exceptions.RequestException as e:
-        color_print(f"Error fetching models: {e}", 'error')
-        return []
-
-def clear_screen():
-    """Clears the terminal screen."""
-    # For Windows
-    if os.name == 'nt':
-        _ = os.system('cls')
-    # For macOS and Linux
-    else:
-        _ = os.system('clear')
-
-def main():
     clear_screen()
     session_history = FileHistory(os.path.expanduser('~/.sidekick_history'))
-    command_completer = WordCompleter(['/help', '/exit', '/quit', '/model'], ignore_case=True)
+    command_completer = WordCompleter(['/help', '/exit', '/quit', '/model', '/llm_server', '/system_prompt'], ignore_case=True)
     prompt_session = PromptSession(
         history=session_history,
         auto_suggest=AutoSuggestFromHistory(),
@@ -196,7 +194,6 @@ def main():
         style=style
     )
     
-    current_model = MODEL_NAME
     color_print(f"Welcome to Sidekick! Using model: {current_model}", 'system')
     color_print("Type /help for a list of commands.", 'system')
 
@@ -214,15 +211,46 @@ def main():
             
             if user_prompt.lower() == "/help":
                 print("\nAvailable Commands:")
-                print("  /help   - Show this help message.")
-                print("  /model  - Change the active AI model.")
-                print("  /exit   - Exit the application.")
+                print("  /help           - Show this help message.")
+                print("  /model          - Change the active AI model.")
+                print("  /llm_server     - Change the LLM server API URL.")
+                print("  /system_prompt  - View and edit the system prompt for this session.")
+                print("  /exit           - Exit the application.")
                 print()
+                continue
+
+            if user_prompt.lower() == "/system_prompt":
+                new_system_prompt = input_dialog(
+                    title="System Prompt Editor",
+                    text="Edit the system prompt for this session:",
+                    default=system_prompt,
+                    multiline=True
+                ).run()
+
+                if new_system_prompt:
+                    system_prompt = new_system_prompt
+                    color_print("System prompt updated for this session.", 'success')
+                else:
+                    color_print("System prompt update canceled.", 'system')
+                continue
+
+            if user_prompt.lower() == "/llm_server":
+                new_api_base = input_dialog(
+                    title="LLM Server Configuration",
+                    text="Enter the API Base URL for your LLM server:",
+                    default=api_base
+                ).run()
+
+                if new_api_base:
+                    api_base = new_api_base
+                    color_print(f"LLM Server URL updated to: {api_base}", 'success')
+                else:
+                    color_print("LLM Server URL update canceled.", 'system')
                 continue
 
             if user_prompt.lower() == "/model":
                 color_print("Fetching available models...", 'system')
-                models = get_model_choices()
+                models = get_model_choices(api_base)
                 if not models:
                     color_print("Could not retrieve models. Please check your server.", 'error')
                     continue
@@ -248,8 +276,8 @@ def main():
             def get_llm_response():
                 try:
                     llm = ChatOpenAI(
-                        model=current_model, openai_api_base=API_BASE, openai_api_key=API_KEY)
-                    full_prompt = f"{SYSTEM_PROMPT}\nUser Request: {user_prompt}"
+                        model=current_model, openai_api_base=api_base, openai_api_key=api_key)
+                    full_prompt = f"{system_prompt}\nUser Request: {user_prompt}"
                     response_container["response"] = llm.invoke(full_prompt)
                 except Exception as e:
                     response_container["error"] = e
