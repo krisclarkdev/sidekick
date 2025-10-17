@@ -32,7 +32,7 @@ def color_print(text, style_class):
     """Prints text in a given style."""
     colors = {
         'system': '\033[93m',  # Yellow
-        'user': '\033[92m',  # Green
+        'user': '\032[92m',  # Green
         'error': '\033[91m',  # Red
         'success': '\033[92m', # Green
         'plan': '\033[96m', # Cyan
@@ -220,17 +220,23 @@ Now, fulfill the user's request.
                 continue
 
             if user_prompt.lower() == "/system_prompt":
-                color_print("\nEditing system prompt. Press Meta+Enter or Esc+Enter to finish.", 'system')
+                # Create a more dialog-like feel with a framed message
+                print()
+                color_print("┌─ System Prompt Editor ───────────────────────────────────────┐", 'system')
+                color_print("│ Edit the prompt below. Press Meta+Enter or Esc+Enter to save. │", 'system')
+                color_print("└──────────────────────────────────────────────────────────────┘", 'system')
+
                 new_system_prompt = prompt_session.prompt(
                     multiline=True,
                     default=system_prompt
                 )
                 
-                if new_system_prompt:
+                # Check if the prompt was actually changed
+                if new_system_prompt is not None and new_system_prompt.strip() != system_prompt.strip():
                     system_prompt = new_system_prompt
                     color_print("\nSystem prompt updated for this session.", 'success')
                 else:
-                    color_print("\nSystem prompt update canceled.", 'system')
+                    color_print("\nSystem prompt update canceled or no changes made.", 'system')
                 print()
                 continue
 
