@@ -87,8 +87,10 @@ This will launch the interactive chat session.
 In-App Commands
 
 ```
-/help: Displays the list of available commands.
-/model: Fetches a list of available models from your server and allows you to switch the active model for the current session.
-/exit or /quit: Ends the chat session.
+/help: Shows the list of available commands.
+/model: Fetches a list of models from your server and lets you switch to a new one for the current session.
+/llm_server: Opens a dialog to change the LLM server API URL for the current session.
+/system_prompt: Opens a multi-line editor to view and edit the agent's system prompt for the current session.
+/exit: Exits the application.
 ```
 
