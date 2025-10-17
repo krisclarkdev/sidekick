@@ -91,3 +91,4 @@ In-App Commands
 /model: Fetches a list of available models from your server and allows you to switch the active model for the current session.
 /exit or /quit: Ends the chat session.
 ```
+

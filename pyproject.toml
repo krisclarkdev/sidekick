@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sidekick"
+version = "1.0.0" # Version bump for new name
+authors = [
+  { name="Kris Clark", email="no@no.com" },
+]
+description = "A friendly AI agent for your terminal that can create, edit, and test code."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "langchain-openai",
+    "requests",
+    "prompt-toolkit"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/krisclarkdev/sidekick-agent"
+"Bug Tracker" = "https://github.com/krisclarkdev/sidekick-agent/issues"
+
+[project.scripts]
+sidekick = "ai_agent.main:main"
+
+
